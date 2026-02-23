@@ -10,7 +10,7 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 - Read `docs/mark-types.md` before choosing a mark type.
 - Check `docs/usage.md` for exact invocation syntax.
 
-## Available Marks (24)
+## Available Marks (40)
 
 **Git History:**
 - `mark-commit` — structured commit with trailers, optional tag
@@ -20,6 +20,11 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 **Git Config:**
 - `mark-hook` — pre-commit hook, stamps `.git/mark-trail`
 - `mark-gitattributes` — drop .gitattributes
+
+**Git Identity:**
+- `mark-mailmap` — add .mailmap entry for author canonicalization
+- `mark-signoff` — add Signed-off-by trailer (DCO)
+- `mark-sign` — GPG/SSH sign a commit or tag
 
 **GitHub Platform:**
 - `mark-pr` — create PR via `gh pr create`
@@ -40,11 +45,40 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 - `mark-dependabot` — drop .github/dependabot.yml
 - `mark-workflow` — drop GitHub Actions workflow
 
+**Enforcement:**
+- `mark-commitlint` — drop commitlint config + husky commit-msg hook
+- `mark-lint-staged` — drop lint-staged config + husky pre-commit hook
+
 **Source Files:**
 - `mark-header.ts` — copyright/license banner, idempotent
 - `mark-watermark.ts` — build-hash injection, replaces existing
 - `mark-annotate.ts` — `@generated` / `@todo` / `@fixme` / `@marked-by`
 - `mark-docstring.ts` — JSDoc or Python docstring for a function
+
+**License:**
+- `mark-spdx.ts` — SPDX-License-Identifier + SPDX-FileCopyrightText (REUSE standard)
+
+**Supply Chain:**
+- `mark-sbom` — generate SPDX or CycloneDX SBOM
+- `mark-attestation` — SLSA provenance attestation (in-toto v1)
+
+**Container:**
+- `mark-dockerfile` — drop Dockerfile with OCI labels
+- `mark-oci-labels.ts` — add/update OCI annotations in Dockerfile
+
+**Well-Known:**
+- `mark-humans` — drop humans.txt (credits file)
+- `mark-security` — drop .well-known/security.txt (RFC 9116)
+- `mark-robots` — drop robots.txt
+
+**Build:**
+- `mark-sourcemap.ts` — inject sourceMappingURL comment
+
+**Observability:**
+- `mark-otel` — drop OpenTelemetry resource config
+
+**AI:**
+- `mark-ai-disclosure` — add @ai-generated disclosure comment
 
 **Invisible / Forensic:**
 - `mark-gitkeep` — .gitkeep in empty directories

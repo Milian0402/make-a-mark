@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-mailmap --name <canonical> --email <canonical> [--old-name <name>] [--old-email <email>] [--repo <path>]"
+  exit 1
+}
+
+name=""
+email=""
+old_name=""
+old_email=""
+repo="."
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --name) name="$2"; shift 2 ;;
+    --email) email="$2"; shift 2 ;;
+    --old-name) old_name="$2"; shift 2 ;;
+    --old-email) old_email="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$name" ]] && { echo "error: --name required" >&2; exit 1; }
+[[ -z "$email" ]] && { echo "error: --email required" >&2; exit 1; }
+
+mailmap="$repo/.mailmap"
+
+if [[ -n "$old_email" ]]; then
+  if [[ -n "$old_name" ]]; then
+    entry="$name <$email> $old_name <$old_email>"
+  else
+    entry="$name <$email> <$old_email>"
+  fi
+else
+  entry="$name <$email>"
+fi
+
+if [[ -f "$mailmap" ]] && grep -qF "$entry" "$mailmap"; then
+  echo "Entry already in $mailmap"
+  exit 0
+fi
+
+echo "$entry" >> "$mailmap"
+echo "Added to $mailmap: $entry"

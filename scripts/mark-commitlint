@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-commitlint [--repo <path>] [--force]"
+  exit 1
+}
+
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+config="$repo/.commitlintrc.json"
+hook_dir="$repo/.husky"
+hook_file="$hook_dir/commit-msg"
+
+if [[ -f "$config" ]] && [[ "$force" != true ]]; then
+  echo "error: $config already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+cat > "$config" << 'JSON'
+{
+  "extends": ["@commitlint/config-conventional"],
+  "rules": {
+    "type-enum": [2, "always", [
+      "feat", "fix", "docs", "style", "refactor",
+      "perf", "test", "build", "ci", "chore", "revert", "mark"
+    ]],
+    "subject-case": [2, "never", ["start-case", "pascal-case", "upper-case"]]
+  }
+}
+JSON
+
+echo "Dropped $config"
+
+mkdir -p "$hook_dir"
+
+if [[ -f "$hook_file" ]] && [[ "$force" != true ]]; then
+  if grep -qF "commitlint" "$hook_file"; then
+    echo "commitlint hook already in $hook_file"
+    exit 0
+  fi
+fi
+
+cat > "$hook_file" << 'HOOK'
+#!/usr/bin/env sh
+npx --no -- commitlint --edit "$1"
+HOOK
+
+chmod +x "$hook_file"
+echo "Dropped $hook_file"

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-sbom [--format spdx|cyclonedx] [--output <file>] [--force]"
+  exit 1
+}
+
+format="spdx"
+output=""
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --format) format="$2"; shift 2 ;;
+    --output) output="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$output" ]]; then
+  if [[ "$format" == "cyclonedx" ]]; then
+    output="sbom.cdx.json"
+  else
+    output="sbom.spdx.json"
+  fi
+fi
+
+if [[ -f "$output" ]] && [[ "$force" != true ]]; then
+  echo "error: $output already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+date_str="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+repo_name="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+
+if [[ "$format" == "cyclonedx" ]]; then
+  cat > "$output" << JSON
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "$date_str",
+    "component": {
+      "type": "application",
+      "name": "$repo_name"
+    },
+    "tools": [{ "name": "make-a-mark", "version": "1.0" }]
+  },
+  "components": []
+}
+JSON
+else
+  cat > "$output" << JSON
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "$repo_name",
+  "documentNamespace": "https://spdx.org/spdxdocs/$repo_name-$date_str",
+  "creationInfo": {
+    "created": "$date_str",
+    "creators": ["Tool: make-a-mark"]
+  },
+  "packages": []
+}
+JSON
+fi
+
+echo "Generated $format SBOM: $output"

@@ -241,3 +241,163 @@ Fields added or modified in `package.json`: keywords, author, homepage, and othe
 - **Where it lives**: `package.json`
 - **When to use**: enriching npm/registry metadata or declaring project properties
 - **Distinguishing trait**: consumed by package registries and tooling
+
+---
+
+## Mailmap
+
+A `.mailmap` file entry mapping old author names/emails to canonical identities. Fixes `git blame` and `git shortlog` output without rewriting history.
+
+- **Where it lives**: `.mailmap` in repo root
+- **When to use**: consolidating multiple author identities (name changes, email switches)
+- **Distinguishing trait**: built-in git feature, no history rewriting needed
+
+---
+
+## Signoff (DCO)
+
+A `Signed-off-by:` trailer added to commit messages, certifying the Developer Certificate of Origin.
+
+- **Where it lives**: commit message trailers
+- **When to use**: certifying that contributions comply with the project's license
+- **Distinguishing trait**: required by Linux kernel and many open source projects
+
+---
+
+## Commit Signing
+
+GPG or SSH signature on a commit or tag, providing cryptographic proof of authorship.
+
+- **Where it lives**: git object metadata
+- **When to use**: verifying commit authenticity in security-sensitive projects
+- **Distinguishing trait**: GitHub shows "Verified" badge on signed commits
+
+---
+
+## Commitlint Config
+
+A `.commitlintrc.json` config file and `.husky/commit-msg` hook enforcing conventional commit message format.
+
+- **Where it lives**: `.commitlintrc.json` + `.husky/commit-msg`
+- **When to use**: enforcing consistent commit messages across a team
+- **Distinguishing trait**: prevents non-conforming commits at the git level
+
+---
+
+## Lint-Staged Config
+
+A `.lintstagedrc.json` config file and `.husky/pre-commit` hook running linters only on staged files.
+
+- **Where it lives**: `.lintstagedrc.json` + `.husky/pre-commit`
+- **When to use**: catching lint/format issues before they enter version control
+- **Distinguishing trait**: only processes staged files, fast even on large codebases
+
+---
+
+## SPDX License Headers
+
+`SPDX-License-Identifier` and `SPDX-FileCopyrightText` comments prepended to source files following the REUSE standard from the Free Software Foundation Europe.
+
+- **Where it lives**: top of source files (after shebang if present)
+- **When to use**: machine-readable license and copyright declaration per file
+- **Distinguishing trait**: standardized by SPDX, recommended by FSFE's REUSE initiative
+
+---
+
+## SBOM (Software Bill of Materials)
+
+A structured JSON document listing all software components, versions, licenses, and checksums. Supports SPDX 2.3 and CycloneDX 1.5 formats.
+
+- **Where it lives**: `sbom.spdx.json` or `sbom.cdx.json` in repo root
+- **When to use**: supply chain transparency, compliance with US EO 14028 and EU CRA
+- **Distinguishing trait**: machine-readable inventory consumed by security scanners
+
+---
+
+## Provenance Attestation
+
+An in-toto Statement v1 attestation documenting who built an artifact, when, and how. Follows the SLSA provenance specification.
+
+- **Where it lives**: `<artifact>.attestation.json`
+- **When to use**: proving artifact provenance for supply chain security
+- **Distinguishing trait**: verifiable by Sigstore/cosign, required at SLSA Level 2+
+
+---
+
+## Dockerfile with OCI Labels
+
+A Dockerfile with standardized `org.opencontainers.image.*` labels providing image metadata: title, source, version, creation date, vendor.
+
+- **Where it lives**: `Dockerfile` in repo root
+- **When to use**: creating container images with proper metadata
+- **Distinguishing trait**: OCI-standard annotations consumed by registries and security tools
+
+---
+
+## OCI Label Injection
+
+OCI annotation labels added or updated in an existing Dockerfile's `LABEL` instruction. Supports all standard `org.opencontainers.image.*` keys.
+
+- **Where it lives**: `LABEL` instruction in Dockerfile
+- **When to use**: enriching existing Dockerfiles with traceability metadata
+- **Distinguishing trait**: modifies in place, idempotent replacement of existing labels
+
+---
+
+## humans.txt
+
+A `humans.txt` file crediting the people behind a project with team roles, technologies used, and last update date. Standard from humanstxt.org.
+
+- **Where it lives**: `humans.txt` in repo/site root
+- **When to use**: giving human-readable credit to contributors
+- **Distinguishing trait**: served by Google and other major sites, web standard
+
+---
+
+## security.txt (RFC 9116)
+
+A `.well-known/security.txt` file declaring vulnerability disclosure contact information, expiry date, and security policy URL.
+
+- **Where it lives**: `.well-known/security.txt`
+- **When to use**: helping security researchers report vulnerabilities responsibly
+- **Distinguishing trait**: IETF RFC 9116 standard, expected by security researchers
+
+---
+
+## robots.txt
+
+A `robots.txt` file declaring crawling rules for web robots with User-agent, Allow/Disallow directives, and optional Sitemap.
+
+- **Where it lives**: `robots.txt` in site root
+- **When to use**: controlling search engine crawling behavior
+- **Distinguishing trait**: de facto web standard since 1994
+
+---
+
+## Source Map Comment
+
+A `//# sourceMappingURL=` comment (JS) or `/*# sourceMappingURL= */` comment (CSS) linking minified output to its source map.
+
+- **Where it lives**: last line of JS/CSS files
+- **When to use**: enabling debugging of minified/bundled code
+- **Distinguishing trait**: consumed by browser DevTools and error tracking services (Sentry, Datadog)
+
+---
+
+## OpenTelemetry Resource Config
+
+An `otel-resource.yaml` file declaring OpenTelemetry service resource attributes: service name, version, deployment environment, and SDK info.
+
+- **Where it lives**: `otel-resource.yaml` in repo root
+- **When to use**: configuring observability attributes for distributed tracing
+- **Distinguishing trait**: follows CNCF OpenTelemetry semantic conventions
+
+---
+
+## AI Disclosure
+
+An `@ai-generated` comment injected into source files declaring the AI model, generation date, and scope (full or partial). Uses the file's native comment syntax.
+
+- **Where it lives**: top of source files (after shebang if present)
+- **When to use**: disclosing AI-generated code for review and compliance
+- **Distinguishing trait**: emerging industry practice for AI transparency

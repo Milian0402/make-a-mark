@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-security --contact <url-or-email> [--expires <date>] [--policy <url>] [--repo <path>] [--force]"
+  exit 1
+}
+
+contact=""
+expires=""
+policy=""
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --contact) contact="$2"; shift 2 ;;
+    --expires) expires="$2"; shift 2 ;;
+    --policy) policy="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$contact" ]] && { echo "error: --contact required" >&2; exit 1; }
+
+if [[ -z "$expires" ]]; then
+  if date -v+1y +%Y-%m-%dT%H:%M:%SZ &>/dev/null 2>&1; then
+    expires="$(date -v+1y -u +%Y-%m-%dT%H:%M:%SZ)"
+  else
+    expires="$(date -u -d '+1 year' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)"
+  fi
+fi
+
+well_known="$repo/.well-known"
+security="$well_known/security.txt"
+
+if [[ -f "$security" ]] && [[ "$force" != true ]]; then
+  echo "error: $security already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+mkdir -p "$well_known"
+
+{
+  echo "# Security policy for this repository"
+  echo "# https://securitytxt.org/ — RFC 9116"
+  echo ""
+  echo "Contact: $contact"
+  echo "Expires: $expires"
+  [[ -n "$policy" ]] && echo "Policy: $policy"
+  echo "Preferred-Languages: en"
+} > "$security"
+
+echo "Dropped $security"

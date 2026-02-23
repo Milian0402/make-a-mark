@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-attestation --subject <file> [--type <predicate-type>] [--output <file>] [--force]"
+  exit 1
+}
+
+subject=""
+predicate_type="https://slsa.dev/provenance/v1"
+output=""
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --subject) subject="$2"; shift 2 ;;
+    --type) predicate_type="$2"; shift 2 ;;
+    --output) output="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$subject" ]] && { echo "error: --subject required" >&2; exit 1; }
+[[ ! -f "$subject" ]] && { echo "error: subject file not found: $subject" >&2; exit 1; }
+
+if [[ -z "$output" ]]; then
+  output="${subject}.attestation.json"
+fi
+
+if [[ -f "$output" ]] && [[ "$force" != true ]]; then
+  echo "error: $output already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+date_str="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+sha256=$(shasum -a 256 "$subject" | awk '{print $1}')
+
+cat > "$output" << JSON
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "$(basename "$subject")",
+      "digest": { "sha256": "$sha256" }
+    }
+  ],
+  "predicateType": "$predicate_type",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://make-a-mark/v1",
+      "resolvedDependencies": []
+    },
+    "runDetails": {
+      "builder": { "id": "make-a-mark" },
+      "metadata": {
+        "invocationId": "$date_str",
+        "startedOn": "$date_str"
+      }
+    }
+  }
+}
+JSON
+
+echo "Created attestation: $output (sha256:${sha256:0:12}...)"

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-signoff [--name <name>] [--email <email>] [--commit <ref>]"
+  exit 1
+}
+
+name=""
+email=""
+commit_ref=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --name) name="$2"; shift 2 ;;
+    --email) email="$2"; shift 2 ;;
+    --commit) commit_ref="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$name" ]]; then
+  name="$(git config user.name)"
+fi
+if [[ -z "$email" ]]; then
+  email="$(git config user.email)"
+fi
+
+signoff="Signed-off-by: $name <$email>"
+
+if [[ -n "$commit_ref" ]]; then
+  msg="$(git log -1 --format=%B "$commit_ref")"
+  if echo "$msg" | grep -qF "$signoff"; then
+    echo "Commit already has signoff"
+    exit 0
+  fi
+  echo "To add signoff to existing commit, use:"
+  echo "  git commit --amend --trailer \"Signed-off-by: $name <$email>\""
+else
+  echo "To enable signoff for all future commits:"
+  echo "  git commit -s"
+  echo ""
+  echo "Signoff line: $signoff"
+fi

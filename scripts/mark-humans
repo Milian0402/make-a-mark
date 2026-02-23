@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-humans --name <name> [--role <role>] [--twitter <handle>] [--site <url>] [--repo <path>] [--force]"
+  exit 1
+}
+
+name=""
+role="Developer"
+twitter=""
+site=""
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --name) name="$2"; shift 2 ;;
+    --role) role="$2"; shift 2 ;;
+    --twitter) twitter="$2"; shift 2 ;;
+    --site) site="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$name" ]] && { echo "error: --name required" >&2; exit 1; }
+
+humans="$repo/humans.txt"
+
+if [[ -f "$humans" ]] && [[ "$force" != true ]]; then
+  echo "error: $humans already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+{
+  echo "/* TEAM */"
+  echo "  $role: $name"
+  [[ -n "$twitter" ]] && echo "  Twitter: $twitter"
+  [[ -n "$site" ]] && echo "  Site: $site"
+  echo ""
+  echo "/* THANKS */"
+  echo "  make-a-mark — catalog of codebase marks"
+  echo ""
+  echo "/* SITE */"
+  echo "  Last update: $(date -u +%Y/%m/%d)"
+  echo "  Standards: HTML5, CSS3"
+  echo "  Software: Bun, TypeScript"
+} > "$humans"
+
+echo "Dropped $humans"

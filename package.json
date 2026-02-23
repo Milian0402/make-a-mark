@@ -9,7 +9,10 @@
     "build:mark-watermark": "bun build scripts/mark-watermark.ts --compile --outfile bin/mark-watermark",
     "build:mark-annotate": "bun build scripts/mark-annotate.ts --compile --outfile bin/mark-annotate",
     "build:mark-docstring": "bun build scripts/mark-docstring.ts --compile --outfile bin/mark-docstring",
-    "build:mark-metadata": "bun build scripts/mark-metadata.ts --compile --outfile bin/mark-metadata"
+    "build:mark-metadata": "bun build scripts/mark-metadata.ts --compile --outfile bin/mark-metadata",
+    "build:mark-spdx": "bun build scripts/mark-spdx.ts --compile --outfile bin/mark-spdx",
+    "build:mark-oci-labels": "bun build scripts/mark-oci-labels.ts --compile --outfile bin/mark-oci-labels",
+    "build:mark-sourcemap": "bun build scripts/mark-sourcemap.ts --compile --outfile bin/mark-sourcemap"
   },
   "dependencies": {
     "commander": "^13.0.0"

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-ai-disclosure --model <name> [--date <date>] [--scope full|partial] <file>..."
+  exit 1
+}
+
+model=""
+date_str=""
+scope="partial"
+files=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --model) model="$2"; shift 2 ;;
+    --date) date_str="$2"; shift 2 ;;
+    --scope) scope="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) files+=("$1"); shift ;;
+  esac
+done
+
+[[ -z "$model" ]] && { echo "error: --model required" >&2; exit 1; }
+[[ ${#files[@]} -eq 0 ]] && { echo "error: at least one file required" >&2; exit 1; }
+[[ -z "$date_str" ]] && date_str="$(date -u +%Y-%m-%d)"
+
+marker="@ai-generated"
+
+for file in "${files[@]}"; do
+  if [[ ! -f "$file" ]]; then
+    echo "error: file not found: $file" >&2
+    exit 1
+  fi
+
+  if grep -qF "$marker" "$file"; then
+    echo "skip: $file already has $marker"
+    continue
+  fi
+
+  ext="${file##*.}"
+  case "$ext" in
+    ts|js|tsx|jsx|css|java|c|cpp|go|rs)
+      comment="// $marker model=$model date=$date_str scope=$scope"
+      ;;
+    py|rb|sh|bash|yaml|yml)
+      comment="# $marker model=$model date=$date_str scope=$scope"
+      ;;
+    html|xml|svg)
+      comment="<!-- $marker model=$model date=$date_str scope=$scope -->"
+      ;;
+    *)
+      comment="# $marker model=$model date=$date_str scope=$scope"
+      ;;
+  esac
+
+  content="$(cat "$file")"
+  insert_at=0
+
+  if [[ "$content" == "#!"* ]]; then
+    first_line="${content%%$'\n'*}"
+    insert_at=$(( ${#first_line} + 1 ))
+  fi
+
+  printf "%s%s\n%s" "${content:0:$insert_at}" "$comment" "${content:$insert_at}" > "$file"
+  echo "stamped: $file"
+done

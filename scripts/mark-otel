@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-otel --service <name> [--version <ver>] [--env <environment>] [--repo <path>] [--force]"
+  exit 1
+}
+
+service=""
+version="0.1.0"
+env="development"
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --service) service="$2"; shift 2 ;;
+    --version) version="$2"; shift 2 ;;
+    --env) env="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$service" ]] && { echo "error: --service required" >&2; exit 1; }
+
+config="$repo/otel-resource.yaml"
+
+if [[ -f "$config" ]] && [[ "$force" != true ]]; then
+  echo "error: $config already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+date_str="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+cat > "$config" << YAML
+# OpenTelemetry resource attributes
+# Dropped by make-a-mark on $date_str
+# https://opentelemetry.io/docs/specs/semconv/resource/
+
+resource:
+  attributes:
+    service.name: "$service"
+    service.version: "$version"
+    deployment.environment: "$env"
+    telemetry.sdk.language: "javascript"
+    telemetry.sdk.name: "opentelemetry"
+YAML
+
+echo "Dropped $config"

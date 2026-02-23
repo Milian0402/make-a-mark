@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-dockerfile [--base <image>] [--name <app>] [--repo <path>] [--force]"
+  exit 1
+}
+
+base="node:22-alpine"
+name=""
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --base) base="$2"; shift 2 ;;
+    --name) name="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+dockerfile="$repo/Dockerfile"
+
+if [[ -f "$dockerfile" ]] && [[ "$force" != true ]]; then
+  echo "error: $dockerfile already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+if [[ -z "$name" ]]; then
+  name="$(basename "$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null || echo "$repo")")"
+fi
+
+date_str="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+cat > "$dockerfile" << DOCKERFILE
+FROM $base
+
+LABEL org.opencontainers.image.title="$name" \\
+      org.opencontainers.image.created="$date_str" \\
+      org.opencontainers.image.source="https://github.com/OWNER/$name" \\
+      org.opencontainers.image.version="0.1.0" \\
+      org.opencontainers.image.vendor="make-a-mark"
+
+WORKDIR /app
+COPY . .
+
+CMD ["node", "index.js"]
+DOCKERFILE
+
+echo "Dropped $dockerfile with OCI labels"

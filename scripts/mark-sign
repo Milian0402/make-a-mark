@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-sign [--commit <ref>] [--tag <name>] [--key-type gpg|ssh]"
+  exit 1
+}
+
+commit_ref=""
+tag_name=""
+key_type="gpg"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --commit) commit_ref="$2"; shift 2 ;;
+    --tag) tag_name="$2"; shift 2 ;;
+    --key-type) key_type="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ -z "$commit_ref" ]] && [[ -z "$tag_name" ]]; then
+  echo "error: --commit or --tag required" >&2
+  exit 1
+fi
+
+if [[ -n "$tag_name" ]]; then
+  if git tag -v "$tag_name" &>/dev/null; then
+    echo "Tag $tag_name is already signed"
+    exit 0
+  fi
+  commit_ref="${commit_ref:-HEAD}"
+  git tag -s "$tag_name" "$commit_ref" -m "Signed tag $tag_name"
+  echo "Created signed tag: $tag_name"
+elif [[ -n "$commit_ref" ]]; then
+  if git log --format='%G?' -1 "$commit_ref" | grep -q '[GU]'; then
+    echo "Commit $commit_ref is already signed"
+    exit 0
+  fi
+  echo "Note: to sign future commits, use: git commit -S"
+  echo "To sign the last commit: git commit --amend -S --no-edit"
+  echo "To set signing as default: git config commit.gpgsign true"
+fi

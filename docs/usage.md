@@ -294,3 +294,173 @@ With run endpoint enabled:
     bun app.ts --allow-run
 
 Opens at `http://localhost:3000`.
+
+## mark-mailmap
+
+    scripts/mark-mailmap --name "Milian" --email "m@example.com"
+
+Map old email to new:
+
+    scripts/mark-mailmap --name "Milian" --email "new@example.com" --old-email "old@example.com"
+
+Map old name and email:
+
+    scripts/mark-mailmap --name "Milian" --email "new@example.com" --old-name "OldName" --old-email "old@example.com"
+
+---
+
+## mark-signoff
+
+    scripts/mark-signoff
+
+Check a specific commit:
+
+    scripts/mark-signoff --commit HEAD~1
+
+With custom name/email:
+
+    scripts/mark-signoff --name "Milian" --email "m@example.com"
+
+---
+
+## mark-sign
+
+    scripts/mark-sign --tag v1.0.0
+
+Check if a commit is signed:
+
+    scripts/mark-sign --commit HEAD
+
+---
+
+## mark-commitlint
+
+    scripts/mark-commitlint
+
+Into another repo:
+
+    scripts/mark-commitlint --repo ~/other-project --force
+
+---
+
+## mark-lint-staged
+
+    scripts/mark-lint-staged
+
+Into another repo:
+
+    scripts/mark-lint-staged --repo ~/other-project --force
+
+---
+
+## mark-spdx.ts
+
+    bun scripts/mark-spdx.ts --license MIT --copyright "Milian0402" src/index.ts
+
+Multiple files:
+
+    bun scripts/mark-spdx.ts --license "Apache-2.0" --copyright "MyOrg" --year 2026 src/*.ts
+
+---
+
+## mark-sbom
+
+    scripts/mark-sbom --format spdx
+
+CycloneDX format:
+
+    scripts/mark-sbom --format cyclonedx --output bom.json
+
+---
+
+## mark-attestation
+
+    scripts/mark-attestation --subject dist/app.js
+
+Custom predicate type:
+
+    scripts/mark-attestation --subject bin/cli --type "https://example.com/provenance/v1" --output provenance.json
+
+---
+
+## mark-dockerfile
+
+    scripts/mark-dockerfile --base node:22-alpine --name myapp
+
+With custom base image:
+
+    scripts/mark-dockerfile --base python:3.12-slim --name myapi --force
+
+---
+
+## mark-oci-labels.ts
+
+    bun scripts/mark-oci-labels.ts --title "myapp" --version "1.0" Dockerfile
+
+Multiple labels:
+
+    bun scripts/mark-oci-labels.ts --title "api" --source "https://github.com/org/api" --authors "team" --set com.example.env="prod" Dockerfile
+
+---
+
+## mark-humans
+
+    scripts/mark-humans --name "Milian" --role "Creator"
+
+With extras:
+
+    scripts/mark-humans --name "Milian" --role "Developer" --twitter "@milian" --site "https://example.com"
+
+---
+
+## mark-security
+
+    scripts/mark-security --contact "mailto:security@example.com"
+
+With policy:
+
+    scripts/mark-security --contact "https://example.com/security" --policy "https://example.com/policy" --expires "2027-01-01T00:00:00Z"
+
+---
+
+## mark-robots
+
+    scripts/mark-robots
+
+With sitemap and disallow:
+
+    scripts/mark-robots --sitemap "https://example.com/sitemap.xml" --disallow "/admin"
+
+---
+
+## mark-sourcemap.ts
+
+    bun scripts/mark-sourcemap.ts dist/app.js
+
+Custom URL:
+
+    bun scripts/mark-sourcemap.ts --url "https://cdn.example.com/app.js.map" dist/app.js
+
+Remove existing:
+
+    bun scripts/mark-sourcemap.ts --remove dist/app.js
+
+---
+
+## mark-otel
+
+    scripts/mark-otel --service "my-api"
+
+With environment:
+
+    scripts/mark-otel --service "payment-service" --version "2.1.0" --env production
+
+---
+
+## mark-ai-disclosure
+
+    scripts/mark-ai-disclosure --model "claude-opus-4" src/auth.ts
+
+Full scope with custom date:
+
+    scripts/mark-ai-disclosure --model "gpt-4" --scope full --date "2026-02-23" src/generated.ts src/utils.ts
