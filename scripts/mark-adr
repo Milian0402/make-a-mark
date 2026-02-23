@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-adr --title <title> [--dir <path>] [--status <status>]"
+  exit 1
+}
+
+title=""
+dir="docs/adr"
+status="Accepted"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --title) title="$2"; shift 2 ;;
+    --dir) dir="$2"; shift 2 ;;
+    --status) status="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$title" ]] && { echo "error: --title required" >&2; exit 1; }
+
+mkdir -p "$dir"
+
+last=$(ls "$dir"/[0-9][0-9][0-9][0-9]-*.md 2>/dev/null | tail -1 || true)
+if [[ -z "$last" ]]; then
+  num=1
+else
+  num=$(basename "$last" | grep -o '^[0-9]*' | sed 's/^0*//')
+  num=$((num + 1))
+fi
+padded=$(printf "%04d" "$num")
+
+slug=$(echo "$title" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+file="$dir/${padded}-${slug}.md"
+date_str="$(date -u +%Y-%m-%d)"
+
+cat > "$file" << EOF
+# ${padded}. ${title}
+
+Date: ${date_str}
+Status: ${status}
+
+## Context
+
+## Decision
+
+## Consequences
+EOF
+
+echo "Created $file"

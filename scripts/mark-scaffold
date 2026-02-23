@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-scaffold --type <type> [--repo <path>] [--force]"
+  echo "Types: contributing security code-of-conduct codeowners funding issue-template pr-template"
+  exit 1
+}
+
+type=""
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --type) type="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$type" ]] && { echo "error: --type required" >&2; exit 1; }
+
+case "$type" in
+  contributing)     dest="$repo/CONTRIBUTING.md" ;;
+  security)         dest="$repo/SECURITY.md" ;;
+  code-of-conduct)  dest="$repo/CODE_OF_CONDUCT.md" ;;
+  codeowners)       dest="$repo/CODEOWNERS" ;;
+  funding)          dest="$repo/.github/FUNDING.yml" ;;
+  issue-template)   dest="$repo/.github/ISSUE_TEMPLATE/bug_report.md" ;;
+  pr-template)      dest="$repo/.github/PULL_REQUEST_TEMPLATE.md" ;;
+  *) echo "error: unknown type: $type" >&2; usage ;;
+esac
+
+if [[ -f "$dest" ]] && [[ "$force" != true ]]; then
+  echo "error: $dest already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+mkdir -p "$(dirname "$dest")"
+
+case "$type" in
+  contributing)
+    cat > "$dest" << 'EOF'
+# Contributing
+
+Thank you for your interest in contributing.
+
+## Getting Started
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## Guidelines
+
+- Keep changes focused and atomic
+- Write clear commit messages
+- Add tests for new functionality
+- Update documentation as needed
+EOF
+    ;;
+  security)
+    cat > "$dest" << 'EOF'
+# Security Policy
+
+## Reporting a Vulnerability
+
+If you discover a security vulnerability, please report it responsibly.
+
+**Do not open a public issue.**
+
+Email: [SECURITY_EMAIL]
+
+We will acknowledge receipt within 48 hours and provide a detailed response within 7 days.
+EOF
+    ;;
+  code-of-conduct)
+    cat > "$dest" << 'EOF'
+# Code of Conduct
+
+## Our Pledge
+
+We pledge to make participation in our project a harassment-free experience for everyone.
+
+## Our Standards
+
+- Be respectful and constructive
+- Accept feedback gracefully
+- Focus on what is best for the community
+
+## Enforcement
+
+Instances of unacceptable behavior may be reported to the project maintainers.
+EOF
+    ;;
+  codeowners)
+    cat > "$dest" << 'EOF'
+# CODEOWNERS
+# Each line is a file pattern followed by one or more owners.
+
+* @default-owner
+# docs/ @docs-team
+# src/ @dev-team
+EOF
+    ;;
+  funding)
+    cat > "$dest" << 'EOF'
+# These are supported funding model platforms
+github: []
+# patreon:
+# open_collective:
+# ko_fi:
+# custom: ["https://example.com/donate"]
+EOF
+    ;;
+  issue-template)
+    cat > "$dest" << 'EOF'
+---
+name: Bug Report
+about: Report a bug
+labels: bug
+---
+
+## Description
+
+## Steps to Reproduce
+
+1.
+2.
+3.
+
+## Expected Behavior
+
+## Actual Behavior
+
+## Environment
+EOF
+    ;;
+  pr-template)
+    cat > "$dest" << 'EOF'
+## Summary
+
+## Changes
+
+-
+
+## Test Plan
+
+-
+
+## Checklist
+
+- [ ] Tests pass
+- [ ] Documentation updated
+EOF
+    ;;
+esac
+
+echo "Dropped $dest"

@@ -10,17 +10,47 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 - Read `docs/mark-types.md` before choosing a mark type.
 - Check `docs/usage.md` for exact invocation syntax.
 
-## Available Marks
+## Available Marks (24)
 
-- `mark-commit` — structured commit with trailers (`Co-Authored-By:`, `Task:`), optional tag
-- `mark-header.ts` — copyright/license banner, skips shebangs, idempotent
-- `mark-watermark.ts` — build-hash injection, replaces existing watermark
+**Git History:**
+- `mark-commit` — structured commit with trailers, optional tag
+- `mark-note` — git notes (metadata without changing SHA)
+- `mark-branch` — conventionally-named branch
+
+**Git Config:**
 - `mark-hook` — pre-commit hook, stamps `.git/mark-trail`
-- `mark-changelog` — structured changelog entry, newest-first
-- `mark-annotate.ts` — `@generated` / `@todo` / `@fixme` / `@marked-by` comments
-- `mark-config` — marker YAML config file (`.toolname.yml`)
-- `mark-badge` — shields.io badge or attribution line in README
-- `mark-branch` — conventionally-named branch (`prefix-<id>-<slug>`)
+- `mark-gitattributes` — drop .gitattributes
+
+**GitHub Platform:**
+- `mark-pr` — create PR via `gh pr create`
+- `mark-issue` — create issue via `gh issue create`
+- `mark-release` — create release via `gh release create`
+- `mark-topic` — set repo topics via `gh api`
+
+**Markdown / Docs:**
+- `mark-badge` — shields.io badge in README
+- `mark-changelog` — structured changelog entry
+- `mark-scaffold` — drop CONTRIBUTING/SECURITY/CODE_OF_CONDUCT/CODEOWNERS/FUNDING/templates
+- `mark-adr` — numbered Architecture Decision Record
+
+**Config / Dotfiles:**
+- `mark-config` — marker YAML config file
+- `mark-editorconfig` — drop .editorconfig
+- `mark-nodeversion` — drop .nvmrc / .node-version
+- `mark-dependabot` — drop .github/dependabot.yml
+- `mark-workflow` — drop GitHub Actions workflow
+
+**Source Files:**
+- `mark-header.ts` — copyright/license banner, idempotent
+- `mark-watermark.ts` — build-hash injection, replaces existing
+- `mark-annotate.ts` — `@generated` / `@todo` / `@fixme` / `@marked-by`
+- `mark-docstring.ts` — JSDoc or Python docstring for a function
+
+**Invisible / Forensic:**
+- `mark-gitkeep` — .gitkeep in empty directories
+
+**Package:**
+- `mark-metadata.ts` — edit package.json fields + keywords
 
 ## Conventions
 
@@ -33,9 +63,7 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 ## Build / Test
 
     bun install
-    bun run build:mark-header
-    bun run build:mark-watermark
-    bun run build:mark-annotate
+    bun run dev              # web UI at localhost:3000
 
 ## Git
 

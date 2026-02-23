@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-gitkeep <dir>..."
+  exit 1
+}
+
+dirs=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help) usage ;;
+    *) dirs+=("$1"); shift ;;
+  esac
+done
+
+[[ ${#dirs[@]} -eq 0 ]] && { echo "error: at least one directory required" >&2; exit 1; }
+
+for d in "${dirs[@]}"; do
+  mkdir -p "$d"
+  touch "$d/.gitkeep"
+  echo "Created $d/.gitkeep"
+done

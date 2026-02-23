@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-dependabot [--ecosystem <npm|pip|cargo|...>] [--repo <path>] [--force]"
+  exit 1
+}
+
+ecosystem="npm"
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --ecosystem) ecosystem="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+file="$repo/.github/dependabot.yml"
+
+if [[ -f "$file" ]] && [[ "$force" != true ]]; then
+  echo "error: $file already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+mkdir -p "$repo/.github"
+
+cat > "$file" << EOF
+version: 2
+updates:
+  - package-ecosystem: "$ecosystem"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+EOF
+
+echo "Dropped $file"

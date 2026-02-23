@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-issue --title <title> [--body <text>] [--label <label>]..."
+  exit 1
+}
+
+title=""
+body=""
+labels=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --title) title="$2"; shift 2 ;;
+    --body) body="$2"; shift 2 ;;
+    --label) labels+=("$2"); shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$title" ]] && { echo "error: --title required" >&2; exit 1; }
+
+args=(--title "$title")
+[[ -n "$body" ]] && args+=(--body "$body")
+if [[ ${#labels[@]} -gt 0 ]]; then
+  for l in "${labels[@]}"; do args+=(--label "$l"); done
+fi
+
+gh issue create "${args[@]}"

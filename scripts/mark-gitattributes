@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-gitattributes [--repo <path>] [--force]"
+  exit 1
+}
+
+repo="."
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo) repo="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+file="$repo/.gitattributes"
+
+if [[ -f "$file" ]] && [[ "$force" != true ]]; then
+  echo "error: $file already exists. Use --force to overwrite." >&2
+  exit 1
+fi
+
+cat > "$file" << 'EOF'
+* text=auto eol=lf
+*.ts diff=typescript
+*.js diff=javascript
+*.py diff=python
+*.md diff=markdown
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary
+EOF
+
+echo "Dropped $file"

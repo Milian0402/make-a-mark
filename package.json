@@ -3,9 +3,13 @@
   "name": "make-a-mark",
   "description": "Catalog and demonstrate ways a program can leave a mark in a codebase",
   "scripts": {
+    "dev": "bun app.ts",
+    "start": "bun app.ts",
     "build:mark-header": "bun build scripts/mark-header.ts --compile --outfile bin/mark-header",
     "build:mark-watermark": "bun build scripts/mark-watermark.ts --compile --outfile bin/mark-watermark",
-    "build:mark-annotate": "bun build scripts/mark-annotate.ts --compile --outfile bin/mark-annotate"
+    "build:mark-annotate": "bun build scripts/mark-annotate.ts --compile --outfile bin/mark-annotate",
+    "build:mark-docstring": "bun build scripts/mark-docstring.ts --compile --outfile bin/mark-docstring",
+    "build:mark-metadata": "bun build scripts/mark-metadata.ts --compile --outfile bin/mark-metadata"
   },
   "dependencies": {
     "commander": "^13.0.0"

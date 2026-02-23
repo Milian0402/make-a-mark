@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-topic --topics <t1,t2,...> [--repo <owner/repo>]"
+  exit 1
+}
+
+topics=""
+repo_flag=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --topics) topics="$2"; shift 2 ;;
+    --repo) repo_flag="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$topics" ]] && { echo "error: --topics required" >&2; exit 1; }
+
+json_topics="[$(echo "$topics" | tr ',' '\n' | sed 's/.*/\"&\"/' | tr '\n' ',' | sed 's/,$//')]"
+
+if [[ -n "$repo_flag" ]]; then
+  gh api "repos/$repo_flag/topics" -X PUT --input - <<< "{\"names\": $json_topics}"
+else
+  gh api "repos/{owner}/{repo}/topics" -X PUT --input - <<< "{\"names\": $json_topics}"
+fi
+
+echo "Set topics: $topics"

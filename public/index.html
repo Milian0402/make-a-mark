@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>make-a-mark</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+      font-size: 14px; background: #fafafa; color: #111; padding: 1.5rem 2rem;
+      max-width: 960px; margin: 0 auto;
+    }
+    h1 { font-size: 1.3rem; margin-bottom: .25rem; }
+    .subtitle { color: #666; font-size: .85rem; margin-bottom: 1.25rem;
+                font-family: system-ui, -apple-system, sans-serif; }
+    .count { color: #999; font-size: .8rem; margin-bottom: 1.25rem; }
+    nav { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    nav button {
+      padding: .35rem .75rem; border: 1px solid #ccc; background: #fff;
+      cursor: pointer; border-radius: 3px; font-size: .8rem;
+      font-family: inherit; transition: all .1s;
+    }
+    nav button:hover { border-color: #888; }
+    nav button.active { background: #111; color: #fff; border-color: #111; }
+    section { margin-bottom: 2rem; }
+    section h2 {
+      font-size: .8rem; text-transform: uppercase; letter-spacing: .1em;
+      color: #888; margin-bottom: .75rem; border-bottom: 1px solid #e0e0e0;
+      padding-bottom: .4rem;
+    }
+    article {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 4px;
+      padding: .75rem 1rem; margin-bottom: .5rem;
+    }
+    article h3 { font-size: .95rem; margin-bottom: .2rem; display: flex; align-items: center; gap: .5rem; }
+    article p {
+      color: #555; font-size: .82rem; margin-bottom: .5rem;
+      font-family: system-ui, -apple-system, sans-serif; line-height: 1.4;
+    }
+    pre {
+      background: #f0f0f0; padding: .5rem .75rem; border-radius: 3px;
+      overflow-x: auto; font-size: .78rem; margin-bottom: .5rem;
+      border: 1px solid #e8e8e8;
+    }
+    .actions { display: flex; gap: .4rem; }
+    .btn {
+      padding: .25rem .65rem; border: 1px solid #bbb; background: #fff;
+      cursor: pointer; border-radius: 3px; font-size: .78rem;
+      font-family: inherit; transition: all .1s;
+    }
+    .btn:hover { border-color: #666; background: #f5f5f5; }
+    .btn-run { border-color: #111; background: #111; color: #fff; }
+    .btn-run:hover { background: #333; }
+    .btn-copied { border-color: #2a2; color: #2a2; }
+    .tag {
+      display: inline-block; font-size: .65rem; padding: .1rem .4rem;
+      border: 1px solid #ddd; border-radius: 2px; color: #888;
+      font-weight: normal;
+    }
+    .args-table { font-size: .75rem; margin-bottom: .5rem; width: 100%; border-collapse: collapse; }
+    .args-table th { text-align: left; color: #888; font-weight: normal; padding: .2rem .5rem .2rem 0; }
+    .args-table td { padding: .2rem .5rem .2rem 0; }
+    .args-table .req { color: #c44; }
+    details { margin-top: .5rem; }
+    details summary { cursor: pointer; font-size: .8rem; color: #666; }
+    details pre { background: #1a1a1a; color: #ccc; border-color: #333; }
+    .empty { color: #999; font-style: italic; padding: 2rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>make-a-mark</h1>
+  <p class="subtitle">Ways a program can leave a permanent mark in a codebase.</p>
+  <p class="count" id="count"></p>
+  <nav id="tabs"></nav>
+  <main id="content"><p class="empty">Loading...</p></main>
+
+  <script>
+    let data = null;
+    let active = "All";
+    let runEnabled = false;
+
+    async function load() {
+      const res = await fetch("/api/marks");
+      data = await res.json();
+      runEnabled = data.runEnabled || false;
+      document.getElementById("count").textContent = data.marks.length + " marks across " + data.categories.length + " categories";
+      renderTabs();
+      render();
+    }
+
+    function renderTabs() {
+      const nav = document.getElementById("tabs");
+      const cats = ["All", ...data.categories];
+      nav.innerHTML = cats.map(c => {
+        const count = c === "All" ? data.marks.length : (data.marksByCategory[c] || []).length;
+        return '<button class="' + (c === active ? "active" : "") + '" onclick="setCategory(\'' + esc(c) + '\')">' + esc(c) + ' (' + count + ')</button>';
+      }).join("");
+    }
+
+    function setCategory(cat) { active = cat; renderTabs(); render(); }
+
+    function render() {
+      const main = document.getElementById("content");
+      const visible = active === "All" ? [...data.categories] : [active];
+      let html = "";
+      for (const cat of visible) {
+        const marks = data.marksByCategory[cat] || [];
+        if (!marks.length) continue;
+        html += '<section><h2>' + esc(cat) + '</h2>';
+        for (const m of marks) html += card(m);
+        html += '</section>';
+      }
+      main.innerHTML = html || '<p class="empty">No marks found.</p>';
+    }
+
+    function card(m) {
+      let h = '<article id="card-' + m.id + '">';
+      h += '<h3>' + esc(m.name) + ' <span class="tag">' + m.runtime + '</span></h3>';
+      h += '<p>' + esc(m.description) + '</p>';
+      if (m.args.length) {
+        h += '<table class="args-table"><tr><th>Flag</th><th>Description</th><th></th></tr>';
+        for (const a of m.args) {
+          h += '<tr><td><code>' + esc(a.flag) + '</code></td><td>' + esc(a.description);
+          if (a.default) h += ' <span style="color:#999">(default: ' + esc(a.default) + ')</span>';
+          h += '</td><td>' + (a.required ? '<span class="req">required</span>' : '') + '</td></tr>';
+        }
+        h += '</table>';
+      }
+      h += '<pre>' + esc(m.example) + '</pre>';
+      h += '<div class="actions">';
+      h += '<button class="btn" id="copy-' + m.id + '" onclick="copyCmd(\'' + escAttr(m.example) + '\', \'' + m.id + '\')">Copy</button>';
+      if (runEnabled) h += '<button class="btn btn-run" onclick="runMark(\'' + m.id + '\')">Run</button>';
+      h += '</div>';
+      h += '<details id="output-' + m.id + '" style="display:none"><summary>Output</summary><pre id="stdout-' + m.id + '"></pre></details>';
+      h += '</article>';
+      return h;
+    }
+
+    function copyCmd(cmd, id) {
+      navigator.clipboard.writeText(cmd).then(function() {
+        var btn = document.getElementById("copy-" + id);
+        btn.textContent = "Copied";
+        btn.classList.add("btn-copied");
+        setTimeout(function() { btn.textContent = "Copy"; btn.classList.remove("btn-copied"); }, 1500);
+      }).catch(function() {});
+    }
+
+    async function runMark(id) {
+      const el = document.getElementById("stdout-" + id);
+      const det = document.getElementById("output-" + id);
+      el.textContent = "Running...";
+      det.style.display = "";
+      det.open = true;
+      try {
+        const res = await fetch("/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: id, args: [] }),
+        });
+        const d = await res.json();
+        if (d.error) { el.textContent = "Error: " + d.error; return; }
+        el.textContent = [d.stdout, d.stderr].filter(Boolean).join("\n") || "(exit " + d.exitCode + ")";
+      } catch (e) {
+        el.textContent = "Request failed: " + e.message;
+      }
+    }
+
+    function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    function escAttr(s) { return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
+
+    load();
+  </script>
+</body>
+</html>

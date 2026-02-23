@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-release --tag <tag> [--title <title>] [--notes <text>] [--draft]"
+  exit 1
+}
+
+tag=""
+title=""
+notes=""
+draft=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --tag) tag="$2"; shift 2 ;;
+    --title) title="$2"; shift 2 ;;
+    --notes) notes="$2"; shift 2 ;;
+    --draft) draft=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$tag" ]] && { echo "error: --tag required" >&2; exit 1; }
+
+args=("$tag")
+[[ -n "$title" ]] && args+=(--title "$title")
+[[ -n "$notes" ]] && args+=(--notes "$notes")
+[[ "$draft" == true ]] && args+=(--draft)
+
+gh release create "${args[@]}"
