@@ -117,6 +117,34 @@ To enable the run endpoint:
 
     bun app.ts --allow-run
 
+## Future: AI-Driven Mark Selection
+
+Today mark selection is manual — the user picks which marks to apply. An AI layer could learn which marks actually stick and which get reverted, ignored, or cause friction.
+
+### How it would work
+
+1. **Observe outcomes** — after a mark is applied, track what happens: was the commit kept or amended away? Did the badge survive the next README edit? Did the changelog entry get reformatted by a human? Was the AI-disclosure comment stripped before merge?
+2. **Build a feedback loop** — score each mark type per-repo by survival rate, reviewer acceptance, and downstream tool consumption (e.g., did a scanner actually read the SBOM? did Dependabot open PRs from the config?).
+3. **Recommend marks** — given a repo's language, size, team size, CI setup, and governance model, suggest which marks are worth applying and which are noise.
+4. **Adaptive sequencing** — learn the right order: e.g., `mark-gitattributes` before first commit, `mark-spdx` before `mark-sbom`, `mark-commitlint` before onboarding new contributors.
+
+### Exception list
+
+Some content looks like boilerplate or generated text to a filter but carries real signal. These should be preserved, not stripped:
+
+| Content type | Why it looks filterable | Why it matters |
+|---|---|---|
+| Event narratives in changelogs | Long prose in a file that's usually bullet points | Tells the story of *why* a breaking change happened — "we migrated auth after the March 2025 incident where..." |
+| Postmortem references in ADRs | Links to external docs, names, dates | Captures organizational context that code alone can't — the decision makes no sense without the story |
+| Human-written AI disclosure context | Looks like a generated `@ai-generated` block | A human adding "Claude drafted this, I reviewed and modified the error handling" is attribution, not boilerplate |
+| Commit trailers with narrative | `Task: PROJ-123 — the billing race condition that hit prod on Tuesday` | Longer than typical trailers but links code to institutional memory |
+| `humans.txt` personal notes | Informal text in a "metadata" file | Credits and thank-you notes are the whole point of the file — filtering them defeats the purpose |
+| Security policy escalation stories | "If you find X, do Y because we learned from Z" in `security.txt` | Context about *why* the disclosure process exists, not just the contact email |
+| License preamble in headers | Verbose copyright blocks | Some licenses (Apache-2.0, GPL-3.0) require specific full-text headers — trimming them violates the license |
+| Funding rationale in FUNDING.yml comments | Comments explaining why specific sponsors are listed | Helps future maintainers understand sponsorship relationships |
+
+The principle: **if removing the text loses a story that explains a decision, keep it.** Marks exist to preserve intent. A mark without its context is just noise.
+
 ## Skills
 
 Each skill in `skills/` is a reusable prompt template for agent workflows.
