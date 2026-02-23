@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-changelog --version <version> --message <message> [--file <path>]"
+  exit 1
+}
+
+version=""
+message=""
+file="CHANGELOG.md"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --version) version="$2"; shift 2 ;;
+    --message) message="$2"; shift 2 ;;
+    --file) file="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$version" ]] && { echo "error: --version required" >&2; exit 1; }
+[[ -z "$message" ]] && { echo "error: --message required" >&2; exit 1; }
+
+date_str="$(date -u +%Y-%m-%d)"
+entry="## $version — $date_str
+
+- $message"
+
+if [[ ! -f "$file" ]]; then
+  printf "# Changelog\n\n%s\n" "$entry" > "$file"
+  echo "Created $file with $version"
+else
+  header=$(head -n 1 "$file")
+  rest=$(tail -n +2 "$file")
+  printf "%s\n\n%s\n%s\n" "$header" "$entry" "$rest" > "$file"
+  echo "Added $version to $file"
+fi

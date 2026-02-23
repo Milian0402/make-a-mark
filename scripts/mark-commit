@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-commit -m <message> -s <scope> [--tag] [--co-author <name> <email>] [--trailer <key> <value>] <file>..."
+  exit 1
+}
+
+message=""
+scope=""
+tag=false
+co_author=""
+trailers=()
+files=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -m) message="$2"; shift 2 ;;
+    -s) scope="$2"; shift 2 ;;
+    --tag) tag=true; shift ;;
+    --co-author)
+      co_author="Co-Authored-By: $2 <$3>"
+      shift 3
+      ;;
+    --trailer)
+      trailers+=("$2: $3")
+      shift 3
+      ;;
+    -h|--help) usage ;;
+    *)
+      if [[ "$1" == "." || "$1" == "-A" ]]; then
+        echo "error: refusing to stage '$1' — list files explicitly" >&2
+        exit 1
+      fi
+      files+=("$1")
+      shift
+      ;;
+  esac
+done
+
+[[ -z "$message" ]] && { echo "error: -m <message> required" >&2; exit 1; }
+[[ -z "$scope" ]] && { echo "error: -s <scope> required" >&2; exit 1; }
+[[ ${#files[@]} -eq 0 ]] && { echo "error: at least one file required" >&2; exit 1; }
+
+for f in "${files[@]}"; do
+  if [[ ! -e "$f" ]] && ! git log --diff-filter=D --name-only --format="" -- "$f" | grep -q .; then
+    echo "error: file not found and not a known deletion: $f" >&2
+    exit 1
+  fi
+done
+
+git add -- "${files[@]}"
+
+commit_msg="mark($scope): $message"
+
+if [[ -n "$co_author" ]]; then
+  commit_msg="$commit_msg"$'\n\n'"$co_author"
+fi
+
+for t in "${trailers[@]}"; do
+  commit_msg="$commit_msg"$'\n'"$t"
+done
+
+git commit -m "$commit_msg"
+
+if [[ "$tag" == true ]]; then
+  tag_name="mark/$(date -u +%Y%m%dT%H%M%SZ)"
+  git tag -a "$tag_name" -m "$commit_msg"
+  echo "Tagged $tag_name"
+fi
+
+echo "Committed mark($scope): $message with ${#files[@]} file(s)"

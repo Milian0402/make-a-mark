@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-branch --prefix <prefix> --id <id> --slug <slug> [--checkout]"
+  exit 1
+}
+
+prefix=""
+id=""
+slug=""
+checkout=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --prefix) prefix="$2"; shift 2 ;;
+    --id) id="$2"; shift 2 ;;
+    --slug) slug="$2"; shift 2 ;;
+    --checkout) checkout=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$prefix" ]] && { echo "error: --prefix required" >&2; exit 1; }
+[[ -z "$id" ]] && { echo "error: --id required" >&2; exit 1; }
+[[ -z "$slug" ]] && { echo "error: --slug required" >&2; exit 1; }
+
+sanitized_slug=$(echo "$slug" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+branch_name="${prefix}-${id}-${sanitized_slug}"
+
+if git rev-parse --verify "$branch_name" >/dev/null 2>&1; then
+  echo "error: branch $branch_name already exists" >&2
+  exit 1
+fi
+
+git branch "$branch_name"
+echo "Created branch $branch_name"
+
+if [[ "$checkout" == true ]]; then
+  git checkout "$branch_name"
+  echo "Switched to $branch_name"
+fi

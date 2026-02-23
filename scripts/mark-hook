@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-hook [--repo <path>] [--agent <name>] [--force]"
+  exit 1
+}
+
+repo="."
+agent="unknown-agent"
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo) repo="$2"; shift 2 ;;
+    --agent) agent="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+hook_dir="$repo/.git/hooks"
+hook_path="$hook_dir/pre-commit"
+
+if [[ ! -d "$repo/.git" ]]; then
+  echo "error: not a git repo: $repo" >&2
+  exit 1
+fi
+
+if [[ -f "$hook_path" ]] && [[ "$force" != true ]]; then
+  echo "error: pre-commit hook already exists. Use --force to append." >&2
+  exit 1
+fi
+
+mkdir -p "$hook_dir"
+
+hook_content='#!/usr/bin/env bash
+# mark-hook: stamps agent identity on each commit
+echo "# marked-by: '"$agent"' at $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$(git rev-parse --show-toplevel)/.git/mark-trail"'
+
+if [[ -f "$hook_path" ]] && [[ "$force" == true ]]; then
+  echo "" >> "$hook_path"
+  echo "$hook_content" >> "$hook_path"
+  echo "Appended mark-hook to existing pre-commit"
+else
+  echo "$hook_content" > "$hook_path"
+  echo "Installed mark-hook as pre-commit"
+fi
+
+chmod +x "$hook_path"

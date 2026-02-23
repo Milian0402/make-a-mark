@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-badge --label <text> --message <text> [--color <hex>] [--url <link>] [--file <readme>] [--force]"
+  exit 1
+}
+
+label=""
+message=""
+color="blue"
+url=""
+file="README.md"
+force=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --label) label="$2"; shift 2 ;;
+    --message) message="$2"; shift 2 ;;
+    --color) color="$2"; shift 2 ;;
+    --url) url="$2"; shift 2 ;;
+    --file) file="$2"; shift 2 ;;
+    --force) force=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$label" ]] && { echo "error: --label required" >&2; exit 1; }
+[[ -z "$message" ]] && { echo "error: --message required" >&2; exit 1; }
+
+if [[ ! -f "$file" ]]; then
+  echo "error: $file not found" >&2
+  exit 1
+fi
+
+encoded_label="${label// /%20}"
+encoded_message="${message// /%20}"
+badge_img="https://img.shields.io/badge/${encoded_label}-${encoded_message}-${color}"
+
+if [[ -n "$url" ]]; then
+  badge_md="[![${label}](${badge_img})](${url})"
+else
+  badge_md="![${label}](${badge_img})"
+fi
+
+if grep -qF "$badge_img" "$file" && [[ "$force" != true ]]; then
+  echo "Badge already present in $file"
+  exit 0
+fi
+
+header=$(head -n 1 "$file")
+rest=$(tail -n +2 "$file")
+printf "%s\n\n%s\n%s\n" "$header" "$badge_md" "$rest" > "$file"
+
+echo "Injected badge into $file"
