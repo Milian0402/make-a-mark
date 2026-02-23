@@ -57,14 +57,17 @@ if [[ -n "$co_author" ]]; then
   commit_msg="$commit_msg"$'\n\n'"$co_author"
 fi
 
-for t in "${trailers[@]}"; do
-  commit_msg="$commit_msg"$'\n'"$t"
-done
+if [[ ${#trailers[@]} -gt 0 ]]; then
+  for t in "${trailers[@]}"; do
+    commit_msg="$commit_msg"$'\n'"$t"
+  done
+fi
 
 git commit -m "$commit_msg"
 
 if [[ "$tag" == true ]]; then
-  tag_name="mark/$(date -u +%Y%m%dT%H%M%SZ)"
+  short_sha=$(git rev-parse --short HEAD)
+  tag_name="mark/${short_sha}"
   git tag -a "$tag_name" -m "$commit_msg"
   echo "Tagged $tag_name"
 fi

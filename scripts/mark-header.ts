@@ -9,8 +9,8 @@ const commentStyles: Record<string, { start: string; end: string }> = {
   ".tsx": { start: "/*", end: " */" },
   ".jsx": { start: "/*", end: " */" },
   ".css": { start: "/*", end: " */" },
-  ".py": { start: '"""', end: '"""' },
-  ".rb": { start: "=begin", end: "=end" },
+  ".py": { start: "#", end: "#" },
+  ".rb": { start: "#", end: "#" },
   ".sh": { start: "#", end: "#" },
   ".bash": { start: "#", end: "#" },
 };
