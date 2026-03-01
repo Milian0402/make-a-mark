@@ -44,9 +44,16 @@ else
   badge_md="![${label}](${badge_img})"
 fi
 
-if grep -qF "$badge_img" "$file" && [[ "$force" != true ]]; then
-  echo "Badge already present in $file"
-  exit 0
+if grep -qF "$badge_img" "$file"; then
+  if [[ "$force" != true ]]; then
+    echo "Badge already present in $file"
+    exit 0
+  fi
+
+  # Remove existing instances before reinserting to keep output idempotent.
+  tmp_file="$(mktemp)"
+  awk -v img="$badge_img" 'index($0, img) == 0 { print }' "$file" > "$tmp_file"
+  mv "$tmp_file" "$file"
 fi
 
 header=$(head -n 1 "$file")

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "bun app.ts",
     "start": "bun app.ts",
+    "test:smoke": "scripts/smoke-test",
     "build:mark-header": "bun build scripts/mark-header.ts --compile --outfile bin/mark-header",
     "build:mark-watermark": "bun build scripts/mark-watermark.ts --compile --outfile bin/mark-watermark",
     "build:mark-annotate": "bun build scripts/mark-annotate.ts --compile --outfile bin/mark-annotate",

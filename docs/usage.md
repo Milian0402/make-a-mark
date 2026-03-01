@@ -2,6 +2,12 @@
 
 Invocation examples for every script. Run from repo root.
 
+Conventions:
+
+- Pass absolute paths to file-targeting scripts.
+- Re-run with `--force` when a script protects an existing file from overwrite.
+- Bash `mark-*` scripts print usage and exit non-zero on `--help`; this is expected.
+
 ---
 
 ## mark-commit

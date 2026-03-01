@@ -32,6 +32,21 @@ if [[ ! -f "$file" ]]; then
   printf "# Changelog\n\n%s\n" "$entry" > "$file"
   echo "Created $file with $version"
 else
+  if grep -qF "## $version — " "$file"; then
+    if awk -v v="$version" -v m="$message" '
+      BEGIN { in_section = 0; found = 0 }
+      index($0, "## " v " — ") == 1 { in_section = 1; next }
+      /^## / { in_section = 0 }
+      in_section && $0 == "- " m { found = 1 }
+      END { exit(found ? 0 : 1) }
+    ' "$file"; then
+      echo "Entry already present in $file for $version"
+    else
+      echo "Version $version already exists in $file; skipping to avoid duplicate headings"
+    fi
+    exit 0
+  fi
+
   header=$(head -n 1 "$file")
   rest=$(tail -n +2 "$file")
   printf "%s\n\n%s\n%s\n" "$header" "$entry" "$rest" > "$file"

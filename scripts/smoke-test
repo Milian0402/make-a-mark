@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(pwd -P)"
+
+if [[ ! -x "$ROOT/scripts/mark-config" ]]; then
+  echo "error: run from repo root" >&2
+  exit 1
+fi
+
+TMP_DIR="$(mktemp -d /tmp/make-a-mark-smoke.XXXX)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+REPO="$TMP_DIR/repo"
+mkdir -p "$REPO"
+
+git -C "$REPO" init -q
+git -C "$REPO" config user.name "Smoke Tester"
+git -C "$REPO" config user.email "smoke@example.com"
+
+cat > "$REPO/README.md" <<'EOF'
+# Smoke
+EOF
+
+cat > "$REPO/app.js" <<'EOF'
+function demo(value) {
+  return value + 1;
+}
+
+console.log(demo(1));
+EOF
+
+cat > "$REPO/package.json" <<'EOF'
+{
+  "name": "smoke",
+  "version": "0.0.0"
+}
+EOF
+
+mkdir -p "$REPO/src/empty"
+
+run() {
+  local label="$1"
+  shift
+  echo "[$label]"
+  "$@" >/dev/null
+}
+
+assert_count() {
+  local label="$1"
+  local expected="$2"
+  local pattern="$3"
+  local file="$4"
+  local actual
+  actual="$(rg -o "$pattern" "$file" | wc -l | tr -d ' ')"
+
+  if [[ "$actual" != "$expected" ]]; then
+    echo "error: $label expected $expected got $actual" >&2
+    exit 1
+  fi
+}
+
+run mark-config "$ROOT/scripts/mark-config" --tool smoke --repo "$REPO"
+run mark-config-force "$ROOT/scripts/mark-config" --tool smoke --repo "$REPO" --force
+run mark-badge "$ROOT/scripts/mark-badge" --label Built --message Smoke --color blue --file "$REPO/README.md"
+run mark-badge-force "$ROOT/scripts/mark-badge" --label Built --message Smoke --color blue --file "$REPO/README.md" --force
+run mark-changelog "$ROOT/scripts/mark-changelog" --version 0.1.0 --message "smoke entry" --file "$REPO/CHANGELOG.md"
+run mark-changelog-again "$ROOT/scripts/mark-changelog" --version 0.1.0 --message "smoke entry" --file "$REPO/CHANGELOG.md"
+run mark-mailmap "$ROOT/scripts/mark-mailmap" --name "Smoke" --email "smoke@example.com" --repo "$REPO"
+run mark-mailmap-again "$ROOT/scripts/mark-mailmap" --name "Smoke" --email "smoke@example.com" --repo "$REPO"
+run mark-gitkeep "$ROOT/scripts/mark-gitkeep" "$REPO/src/empty"
+run mark-gitkeep-again "$ROOT/scripts/mark-gitkeep" "$REPO/src/empty"
+
+run mark-header bun "$ROOT/scripts/mark-header.ts" --author Smoke "$REPO/app.js"
+run mark-header-again bun "$ROOT/scripts/mark-header.ts" --author Smoke "$REPO/app.js"
+run mark-annotate bun "$ROOT/scripts/mark-annotate.ts" --type @fixme --message "smoke marker" "$REPO/app.js"
+run mark-annotate-again bun "$ROOT/scripts/mark-annotate.ts" --type @fixme --message "smoke marker" "$REPO/app.js"
+run mark-docstring bun "$ROOT/scripts/mark-docstring.ts" --fn demo --description "demo function" "$REPO/app.js"
+run mark-docstring-again bun "$ROOT/scripts/mark-docstring.ts" --fn demo --description "demo function" "$REPO/app.js"
+run mark-metadata bun "$ROOT/scripts/mark-metadata.ts" --set author="Smoke" --add-keyword smoke "$REPO/package.json"
+run mark-metadata-again bun "$ROOT/scripts/mark-metadata.ts" --set author="Smoke" --add-keyword smoke "$REPO/package.json"
+run mark-spdx bun "$ROOT/scripts/mark-spdx.ts" --license MIT --copyright Smoke "$REPO/app.js"
+run mark-spdx-again bun "$ROOT/scripts/mark-spdx.ts" --license MIT --copyright Smoke "$REPO/app.js"
+run mark-sourcemap bun "$ROOT/scripts/mark-sourcemap.ts" "$REPO/app.js"
+run mark-sourcemap-again bun "$ROOT/scripts/mark-sourcemap.ts" "$REPO/app.js"
+
+assert_count "badge link count" 1 "img\\.shields\\.io/badge/Built-Smoke-blue" "$REPO/README.md"
+assert_count "changelog version headings" 1 "^## 0\\.1\\.0 — " "$REPO/CHANGELOG.md"
+assert_count "annotate marker count" 1 "smoke marker" "$REPO/app.js"
+assert_count "source map marker count" 1 "sourceMappingURL" "$REPO/app.js"
+assert_count "mailmap entry count" 1 "^Smoke <smoke@example.com>$" "$REPO/.mailmap"
+
+echo "smoke test passed"

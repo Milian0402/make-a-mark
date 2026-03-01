@@ -3,6 +3,16 @@ make-a-mark
 
 Catalog and demonstrate ways a program can leave a permanent mark in a codebase.
 
+## Quick Start
+
+    bun install
+    bun run test:smoke
+
+Then use:
+
+- `docs/mark-types.md` to choose the right mark type
+- `docs/usage.md` for exact command syntax and examples
+
 ## Mark Types
 
 ### Git History
@@ -153,6 +163,10 @@ Each skill in `skills/` is a reusable prompt template for agent workflows.
 
     cd ~/make-a-mark
     bun install
+
+Quick verification:
+
+    bun run test:smoke
 
 To compile standalone binaries:
 
