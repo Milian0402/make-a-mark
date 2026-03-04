@@ -68,6 +68,24 @@ Into another repo:
 
 ---
 
+## mark-blame-ignore
+
+    scripts/mark-blame-ignore --commit HEAD
+
+With git config update:
+
+    scripts/mark-blame-ignore --commit abc1234 --configure
+
+Custom file path:
+
+    scripts/mark-blame-ignore --commit HEAD~1 --file .git-blame-ignore-revs --repo ~/other-project
+
+Allow outside repo root:
+
+    scripts/mark-blame-ignore --commit HEAD --file /tmp/global-ignore-revs --allow-outside-repo --configure
+
+---
+
 ## mark-pr
 
     scripts/mark-pr --title "feat: add dark mode" --base main
@@ -133,6 +151,35 @@ Custom file:
 
 ---
 
+## mark-citation
+
+    scripts/mark-citation --title "make-a-mark" --author "Milian0402"
+
+With multiple authors and URL:
+
+    scripts/mark-citation \
+      --title "make-a-mark" \
+      --author "Milian0402" \
+      --author "Contributor Name" \
+      --version "1.0.0" \
+      --date "2026-03-05" \
+      --message "Please cite this project in research outputs." \
+      --url "https://github.com/Milian0402/make-a-mark"
+
+With custom fields:
+
+    scripts/mark-citation \
+      --title "make-a-mark" \
+      --author "Milian0402" \
+      --set license=MIT \
+      --set keywords="marks,metadata"
+
+Overwrite existing citation:
+
+    scripts/mark-citation --title "make-a-mark" --author "Milian0402" --force
+
+---
+
 ## mark-scaffold
 
     scripts/mark-scaffold --type contributing
@@ -176,6 +223,24 @@ Into another repo:
 Into another repo:
 
     scripts/mark-editorconfig --repo ~/other-project --force
+
+---
+
+## mark-gitignore
+
+    scripts/mark-gitignore
+
+Node preset:
+
+    scripts/mark-gitignore --preset node
+
+Python preset in another repo:
+
+    scripts/mark-gitignore --preset python --repo ~/python-project
+
+Add custom patterns into a named block:
+
+    scripts/mark-gitignore --preset general --block build-cache --pattern .cache/ --pattern "*.tmp"
 
 ---
 
@@ -300,6 +365,12 @@ With run endpoint enabled:
     bun app.ts --allow-run
 
 Opens at `http://localhost:3000`.
+
+The UI supports search, category tabs, deep-link hash state, argument forms, copy command, and run output history.
+
+Optional: lock down run endpoint with a token:
+
+    MARK_RUN_TOKEN="replace-me" bun app.ts --allow-run
 
 ## mark-mailmap
 

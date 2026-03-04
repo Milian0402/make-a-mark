@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: mark-blame-ignore --commit <ref> [--file <path>] [--repo <path>] [--configure] [--allow-outside-repo]"
+  exit 1
+}
+
+commit_ref=""
+file=""
+repo="."
+configure=false
+allow_outside_repo=false
+
+path_within_repo() {
+  local path="$1"
+  local root="$2"
+  case "$path" in
+    "$root"/*|"$root") return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --commit) commit_ref="$2"; shift 2 ;;
+    --file) file="$2"; shift 2 ;;
+    --repo) repo="$2"; shift 2 ;;
+    --configure) configure=true; shift ;;
+    --allow-outside-repo) allow_outside_repo=true; shift ;;
+    -h|--help) usage ;;
+    *) echo "error: unknown arg: $1" >&2; exit 1 ;;
+  esac
+done
+
+[[ -z "$commit_ref" ]] && { echo "error: --commit required" >&2; exit 1; }
+
+repo="$(cd "$repo" 2>/dev/null && pwd -P)" || { echo "error: repo path not found: $repo" >&2; exit 1; }
+[[ ! -d "$repo/.git" ]] && { echo "error: not a git repository: $repo" >&2; exit 1; }
+
+git -C "$repo" rev-parse --verify "$commit_ref^{commit}" >/dev/null 2>&1 || {
+  echo "error: commit not found: $commit_ref" >&2
+  exit 1
+}
+
+resolved_commit="$(git -C "$repo" rev-parse "$commit_ref^{commit}")"
+
+if [[ -z "$file" ]]; then
+  file="$repo/.git-blame-ignore-revs"
+elif [[ "$file" != /* ]]; then
+  file="$repo/$file"
+fi
+
+mkdir -p "$(dirname "$file")"
+file="$(cd "$(dirname "$file")" && pwd -P)/$(basename "$file")"
+
+if [[ "$allow_outside_repo" != true ]] && ! path_within_repo "$file" "$repo"; then
+  echo "error: target file must stay inside repo unless --allow-outside-repo is set" >&2
+  exit 1
+fi
+
+if [[ ! -f "$file" ]]; then
+  {
+    echo "# Commits to ignore in git blame"
+    echo "# Added by make-a-mark"
+  } > "$file"
+fi
+[[ ! -L "$file" ]] || { echo "error: refusing to modify symlink: $file" >&2; exit 1; }
+
+if grep -qF "$resolved_commit" "$file"; then
+  echo "Commit already present in $file"
+else
+  printf "%s\n" "$resolved_commit" >> "$file"
+  echo "Added $resolved_commit to $file"
+fi
+
+if [[ "$configure" == true ]]; then
+  if path_within_repo "$file" "$repo"; then
+    rel_path="${file#"$repo"/}"
+    git -C "$repo" config blame.ignoreRevsFile "$rel_path"
+    echo "Configured blame.ignoreRevsFile=$rel_path"
+  else
+    git -C "$repo" config blame.ignoreRevsFile "$file"
+    echo "Configured blame.ignoreRevsFile=$file"
+  fi
+fi

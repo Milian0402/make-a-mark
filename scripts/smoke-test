@@ -38,6 +38,10 @@ EOF
 
 mkdir -p "$REPO/src/empty"
 
+git -C "$REPO" add README.md app.js package.json
+git -C "$REPO" commit -qm "chore: initialize smoke repo"
+head_sha="$(git -C "$REPO" rev-parse HEAD)"
+
 run() {
   local label="$1"
   shift
@@ -65,10 +69,16 @@ run mark-badge "$ROOT/scripts/mark-badge" --label Built --message Smoke --color 
 run mark-badge-force "$ROOT/scripts/mark-badge" --label Built --message Smoke --color blue --file "$REPO/README.md" --force
 run mark-changelog "$ROOT/scripts/mark-changelog" --version 0.1.0 --message "smoke entry" --file "$REPO/CHANGELOG.md"
 run mark-changelog-again "$ROOT/scripts/mark-changelog" --version 0.1.0 --message "smoke entry" --file "$REPO/CHANGELOG.md"
+run mark-citation "$ROOT/scripts/mark-citation" --title "smoke" --author "Smoke Tester" --repo "$REPO"
+run mark-citation-again "$ROOT/scripts/mark-citation" --title "smoke" --author "Smoke Tester" --repo "$REPO"
 run mark-mailmap "$ROOT/scripts/mark-mailmap" --name "Smoke" --email "smoke@example.com" --repo "$REPO"
 run mark-mailmap-again "$ROOT/scripts/mark-mailmap" --name "Smoke" --email "smoke@example.com" --repo "$REPO"
+run mark-blame-ignore "$ROOT/scripts/mark-blame-ignore" --commit "$head_sha" --repo "$REPO"
+run mark-blame-ignore-again "$ROOT/scripts/mark-blame-ignore" --commit "$head_sha" --repo "$REPO"
 run mark-gitkeep "$ROOT/scripts/mark-gitkeep" "$REPO/src/empty"
 run mark-gitkeep-again "$ROOT/scripts/mark-gitkeep" "$REPO/src/empty"
+run mark-gitignore "$ROOT/scripts/mark-gitignore" --preset node --repo "$REPO"
+run mark-gitignore-again "$ROOT/scripts/mark-gitignore" --preset node --repo "$REPO"
 
 run mark-header bun "$ROOT/scripts/mark-header.ts" --author Smoke "$REPO/app.js"
 run mark-header-again bun "$ROOT/scripts/mark-header.ts" --author Smoke "$REPO/app.js"
@@ -88,5 +98,8 @@ assert_count "changelog version headings" 1 "^## 0\\.1\\.0 — " "$REPO/CHANGELO
 assert_count "annotate marker count" 1 "smoke marker" "$REPO/app.js"
 assert_count "source map marker count" 1 "sourceMappingURL" "$REPO/app.js"
 assert_count "mailmap entry count" 1 "^Smoke <smoke@example.com>$" "$REPO/.mailmap"
+assert_count "citation title count" 1 "^title: \"smoke\"$" "$REPO/CITATION.cff"
+assert_count "blame ignore commit count" 1 "^$head_sha$" "$REPO/.git-blame-ignore-revs"
+assert_count "gitignore node block count" 1 "^# >>> make-a-mark:gitignore:node >>>$" "$REPO/.gitignore"
 
 echo "smoke test passed"

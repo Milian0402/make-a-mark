@@ -23,6 +23,7 @@ Then use:
 ### Git Config
 - git-hook — install pre-commit hook that stamps agent identity
 - gitattributes — drop .gitattributes with LF normalization and diff drivers
+- blame-ignore — track commits in .git-blame-ignore-revs for cleaner git blame
 
 ### Git Identity
 - mailmap — add `.mailmap` entry for author canonicalization
@@ -38,12 +39,14 @@ Then use:
 ### Markdown / Docs
 - badge — inject a shields.io badge or attribution line into README
 - changelog — append structured entry to CHANGELOG.md
+- citation — drop CITATION.cff metadata for software citation
 - scaffold — drop CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CODEOWNERS, FUNDING, templates
 - adr — create a numbered Architecture Decision Record
 
 ### Config / Dotfiles
 - config-stamp — drop a marker YAML config file declaring tool usage
 - editorconfig — drop .editorconfig with sensible defaults
+- gitignore — manage an idempotent .gitignore preset block
 - nodeversion — drop .nvmrc or .node-version
 - dependabot — drop .github/dependabot.yml
 - workflow — drop a GitHub Actions workflow
@@ -96,20 +99,22 @@ See `docs/usage.md` for invocation examples.
     # Bash scripts
     scripts/mark-commit           scripts/mark-note
     scripts/mark-branch           scripts/mark-hook
-    scripts/mark-gitattributes    scripts/mark-mailmap
+    scripts/mark-gitattributes    scripts/mark-blame-ignore
+    scripts/mark-mailmap          scripts/mark-citation
     scripts/mark-signoff          scripts/mark-sign
     scripts/mark-pr               scripts/mark-issue
     scripts/mark-release          scripts/mark-topic
     scripts/mark-badge            scripts/mark-changelog
     scripts/mark-scaffold         scripts/mark-adr
     scripts/mark-config           scripts/mark-editorconfig
-    scripts/mark-nodeversion      scripts/mark-dependabot
-    scripts/mark-workflow         scripts/mark-commitlint
-    scripts/mark-lint-staged      scripts/mark-sbom
-    scripts/mark-attestation      scripts/mark-dockerfile
-    scripts/mark-humans           scripts/mark-security
-    scripts/mark-robots           scripts/mark-otel
-    scripts/mark-ai-disclosure    scripts/mark-gitkeep
+    scripts/mark-gitignore        scripts/mark-nodeversion
+    scripts/mark-dependabot       scripts/mark-workflow
+    scripts/mark-commitlint       scripts/mark-lint-staged
+    scripts/mark-sbom             scripts/mark-attestation
+    scripts/mark-dockerfile       scripts/mark-humans
+    scripts/mark-security         scripts/mark-robots
+    scripts/mark-otel             scripts/mark-ai-disclosure
+    scripts/mark-gitkeep
 
     # TypeScript scripts (run with bun)
     scripts/mark-header.ts        scripts/mark-watermark.ts
@@ -121,11 +126,22 @@ See `docs/usage.md` for invocation examples.
 
     bun run dev
 
-Opens at `http://localhost:3000`. Browse all 40 marks by category, copy commands, view parameters.
+Opens at `http://localhost:3000`.
+
+Features:
+
+- Search and category filtering
+- Per-mark argument forms generated from metadata
+- Copy full command with selected arguments
+- Optional run mode with stdout/stderr/history panel
 
 To enable the run endpoint:
 
     bun app.ts --allow-run
+
+Optional hardening for shared machines:
+
+    MARK_RUN_TOKEN="replace-me" bun app.ts --allow-run
 
 ## Future: AI-Driven Mark Selection
 

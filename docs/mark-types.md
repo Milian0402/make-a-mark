@@ -54,6 +54,16 @@ A `.gitattributes` file declaring file handling rules: LF normalization, languag
 
 ---
 
+## Git Blame Ignore Revs
+
+A `.git-blame-ignore-revs` file entry that tells git blame to skip mechanical or noisy commits (formatting sweeps, generated rewrites).
+
+- **Where it lives**: `.git-blame-ignore-revs` (and optionally local git config)
+- **When to use**: preserving useful blame history after large refactors or bulk formatting
+- **Distinguishing trait**: changes blame output without rewriting commit history
+
+---
+
 ## Pull Request
 
 A pull request created via `gh pr create` with conventional title and optional body, base branch, and draft mode.
@@ -114,6 +124,16 @@ A structured entry appended to `CHANGELOG.md` in the format `## <version> — <d
 
 ---
 
+## Citation File
+
+A `CITATION.cff` file containing software citation metadata (title, authors, version, release date, DOI).
+
+- **Where it lives**: `CITATION.cff` in repo root
+- **When to use**: making the project citable in academic and research workflows
+- **Distinguishing trait**: consumed by GitHub’s citation UI and CFF tooling
+
+---
+
 ## Scaffold
 
 Standard project files dropped by type: CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md, CODEOWNERS, FUNDING.yml, issue templates, PR templates.
@@ -151,6 +171,16 @@ An `.editorconfig` file with sensible defaults: spaces, LF line endings, UTF-8, 
 - **Where it lives**: repo root as `.editorconfig`
 - **When to use**: enforcing consistent editor behavior across IDEs
 - **Distinguishing trait**: supported by most editors without plugins
+
+---
+
+## Gitignore Block
+
+A managed block inside `.gitignore` with preset patterns (`general`, `node`, `python`) inserted with stable marker comments.
+
+- **Where it lives**: `.gitignore` in repo root
+- **When to use**: adding ignore rules without duplicating lines or clobbering unrelated entries
+- **Distinguishing trait**: idempotent block replacement via explicit begin/end markers
 
 ---
 

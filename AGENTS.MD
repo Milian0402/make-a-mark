@@ -10,7 +10,7 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 - Read `docs/mark-types.md` before choosing a mark type.
 - Check `docs/usage.md` for exact invocation syntax.
 
-## Available Marks (40)
+## Available Marks (43)
 
 **Git History:**
 - `mark-commit` — structured commit with trailers, optional tag
@@ -20,6 +20,7 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 **Git Config:**
 - `mark-hook` — pre-commit hook, stamps `.git/mark-trail`
 - `mark-gitattributes` — drop .gitattributes
+- `mark-blame-ignore` — track commits in `.git-blame-ignore-revs` for cleaner blame
 
 **Git Identity:**
 - `mark-mailmap` — add .mailmap entry for author canonicalization
@@ -35,12 +36,14 @@ Catalog of ways a program leaves marks in a codebase. Work style: concise; clear
 **Markdown / Docs:**
 - `mark-badge` — shields.io badge in README
 - `mark-changelog` — structured changelog entry
+- `mark-citation` — drop `CITATION.cff` software citation metadata
 - `mark-scaffold` — drop CONTRIBUTING/SECURITY/CODE_OF_CONDUCT/CODEOWNERS/FUNDING/templates
 - `mark-adr` — numbered Architecture Decision Record
 
 **Config / Dotfiles:**
 - `mark-config` — marker YAML config file
 - `mark-editorconfig` — drop .editorconfig
+- `mark-gitignore` — manage an idempotent `.gitignore` preset block
 - `mark-nodeversion` — drop .nvmrc / .node-version
 - `mark-dependabot` — drop .github/dependabot.yml
 - `mark-workflow` — drop GitHub Actions workflow
