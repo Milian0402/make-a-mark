@@ -13,84 +13,86 @@ Then use:
 - `docs/mark-types.md` to choose the right mark type
 - `docs/usage.md` for exact command syntax and examples
 
-## Mark Types
+## All Mark Ways (43)
+
+Each mark is one distinct way to leave a durable trace in code, config, git metadata, or external platform metadata.
 
 ### Git History
-- git-commit — structured commit message with trailers + optional annotated tag
-- git-note — attach metadata to a commit without changing the SHA
-- branch — create a conventionally-named branch
+- `mark-commit` — leave a structured commit in git history, with optional trailers and tag.
+- `mark-note` — attach git note metadata to a commit without changing commit SHA.
+- `mark-branch` — create a conventionally named branch as a zero-file-change mark.
 
 ### Git Config
-- git-hook — install pre-commit hook that stamps agent identity
-- gitattributes — drop .gitattributes with LF normalization and diff drivers
-- blame-ignore — track commits in .git-blame-ignore-revs for cleaner git blame
+- `mark-hook` — install a pre-commit hook that stamps `.git/mark-trail`.
+- `mark-gitattributes` — add `.gitattributes` rules for line endings and diff behavior.
+- `mark-blame-ignore` — track ignored commits in `.git-blame-ignore-revs` for cleaner blame.
 
 ### Git Identity
-- mailmap — add `.mailmap` entry for author canonicalization
-- signoff — add `Signed-off-by` trailer (Developer Certificate of Origin)
-- sign — GPG/SSH sign a commit or tag
+- `mark-mailmap` — add `.mailmap` mappings for author identity canonicalization.
+- `mark-signoff` — add/verify `Signed-off-by` DCO signoff conventions.
+- `mark-sign` — sign a commit or tag with git signing infrastructure.
 
 ### GitHub Platform
-- pr — create a pull request via `gh pr create`
-- issue — create an issue via `gh issue create`
-- release — create a release via `gh release create`
-- topic — set repository topics via `gh api`
+- `mark-pr` — create a GitHub pull request record.
+- `mark-issue` — create a GitHub issue record.
+- `mark-release` — create a GitHub release + tag record.
+- `mark-topic` — set repository topics in GitHub metadata.
 
 ### Markdown / Docs
-- badge — inject a shields.io badge or attribution line into README
-- changelog — append structured entry to CHANGELOG.md
-- citation — drop CITATION.cff metadata for software citation
-- scaffold — drop CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CODEOWNERS, FUNDING, templates
-- adr — create a numbered Architecture Decision Record
+- `mark-badge` — inject a visible badge mark in `README.md`.
+- `mark-changelog` — append structured release/change entries to `CHANGELOG.md`.
+- `mark-citation` — add `CITATION.cff` citation metadata for research/software reuse.
+- `mark-scaffold` — drop governance/community docs and templates.
+- `mark-adr` — create numbered architecture decision records.
 
 ### Config / Dotfiles
-- config-stamp — drop a marker YAML config file declaring tool usage
-- editorconfig — drop .editorconfig with sensible defaults
-- gitignore — manage an idempotent .gitignore preset block
-- nodeversion — drop .nvmrc or .node-version
-- dependabot — drop .github/dependabot.yml
-- workflow — drop a GitHub Actions workflow
+- `mark-config` — drop a marker tool config file (like `.<tool>.yml`).
+- `mark-editorconfig` — define editor formatting defaults in `.editorconfig`.
+- `mark-gitignore` — manage idempotent ignore blocks in `.gitignore`.
+- `mark-nodeversion` — pin Node runtime in `.nvmrc` or `.node-version`.
+- `mark-dependabot` — enable dependency update automation config.
+- `mark-workflow` — add a GitHub Actions workflow file.
 
 ### Enforcement
-- commitlint — drop commitlint config + husky commit-msg hook
-- lint-staged — drop lint-staged config + husky pre-commit hook
+- `mark-commitlint` — enforce commit message policy via config + hook.
+- `mark-lint-staged` — enforce staged-file lint/format checks via config + hook.
 
 ### Source Files
-- file-header — prepend copyright/license banner to source files
-- watermark — inject build-hash string into a target file
-- annotate — inject `@generated`, `@todo`, `@fixme`, or `@marked-by` comment
-- docstring — add JSDoc or Python docstring to a function
+- `mark-header.ts` — prepend license/copyright headers in source files.
+- `mark-watermark.ts` — inject/update build watermark metadata in source files.
+- `mark-annotate.ts` — add `@generated`, `@todo`, `@fixme`, or `@marked-by` annotations.
+- `mark-docstring.ts` — add docstrings/JSDoc blocks to functions.
 
 ### License
-- spdx — prepend `SPDX-License-Identifier` + `SPDX-FileCopyrightText` (REUSE standard)
+- `mark-spdx.ts` — prepend SPDX license/copyright headers (REUSE style).
 
 ### Supply Chain
-- sbom — generate SPDX or CycloneDX Software Bill of Materials
-- attestation — create SLSA provenance attestation (in-toto Statement v1)
+- `mark-sbom` — generate SPDX or CycloneDX SBOM inventory artifacts.
+- `mark-attestation` — generate provenance attestation artifacts.
 
 ### Container
-- dockerfile — drop Dockerfile with OCI standard labels
-- oci-labels — add/update OCI annotations in existing Dockerfile
+- `mark-dockerfile` — create Dockerfile with OCI image labels.
+- `mark-oci-labels.ts` — inject/update OCI labels in an existing Dockerfile.
 
 ### Well-Known
-- humans — drop `humans.txt` (credits file)
-- security — drop `.well-known/security.txt` (RFC 9116)
-- robots — drop `robots.txt` with crawling rules
+- `mark-humans` — add `humans.txt` credits metadata.
+- `mark-security` — add RFC 9116 `.well-known/security.txt`.
+- `mark-robots` — add crawler policy metadata in `robots.txt`.
 
 ### Build
-- sourcemap — inject `//# sourceMappingURL=` comment into JS/CSS files
+- `mark-sourcemap.ts` — inject or remove source map linkage comments.
 
 ### Observability
-- otel — drop OpenTelemetry resource config with service attributes
+- `mark-otel` — drop OpenTelemetry resource metadata config.
 
 ### AI
-- ai-disclosure — add `@ai-generated` disclosure comment with model/date/scope
+- `mark-ai-disclosure` — add `@ai-generated` disclosure metadata in source files.
 
 ### Invisible / Forensic
-- gitkeep — create .gitkeep in empty directories
+- `mark-gitkeep` — preserve empty directories with `.gitkeep`.
 
 ### Package
-- metadata — edit package.json fields and keywords
+- `mark-metadata.ts` — edit `package.json` metadata fields and keywords.
 
 ## Scripts
 
