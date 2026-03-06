@@ -1,0 +1,52 @@
+name: Daily Maintenance
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate daily maintenance report
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .github/maintenance
+          now_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          tracked_files="$(git ls-files | wc -l | tr -d " ")"
+          total_commits="$(git rev-list --count HEAD)"
+
+          cat > .github/maintenance/daily-report.md <<EOF2
+          # Daily Maintenance Report
+
+          Last run (UTC): ${now_utc}
+          Tracked files: ${tracked_files}
+          Total commits on branch: ${total_commits}
+          EOF2
+
+      - name: Commit report if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- .github/maintenance/daily-report.md; then
+            echo "No report changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/maintenance/daily-report.md
+          git commit -m "chore: daily maintenance report"
+          git push
