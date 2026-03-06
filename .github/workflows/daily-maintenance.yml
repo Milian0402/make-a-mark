@@ -2,7 +2,7 @@ name: Daily Maintenance
 
 on:
   schedule:
-    - cron: "17 3 * * *"
+    - cron: "0 9,10 * * *"
   workflow_dispatch:
 
 permissions:
@@ -19,24 +19,139 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Generate daily maintenance report
+      - name: Gate to 11:00 Europe/Stockholm
+        id: gate
+        shell: bash
+        env:
+          EVENT_NAME: "${{ github.event_name }}"
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=manual_dispatch" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          stockholm_now="$(TZ=Europe/Stockholm date +'%H:%M')"
+          if [ "$stockholm_now" = "11:00" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=scheduled_11am_stockholm" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "reason=scheduled_but_not_11am_stockholm_${stockholm_now}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop when outside 11:00 Stockholm
+        if: steps.gate.outputs.run != 'true'
+        shell: bash
+        run: |
+          echo "Skipping run: ${{ steps.gate.outputs.reason }}"
+          exit 0
+
+      - name: Install OSV-Scanner
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        env:
+          OSV_SCANNER_VERSION: "2.3.3"
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSfL "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64" -o "$RUNNER_TEMP/bin/osv-scanner"
+          chmod +x "$RUNNER_TEMP/bin/osv-scanner"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Install gitleaks
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        env:
+          GITLEAKS_VERSION: "8.30.0"
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o "$RUNNER_TEMP/gitleaks.tgz"
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP/bin" gitleaks
+          chmod +x "$RUNNER_TEMP/bin/gitleaks"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Run OSV scan
+        if: steps.gate.outputs.run == 'true'
         shell: bash
         run: |
           set -euo pipefail
+          if ! osv-scanner -r . --format json --output osv-results.json; then
+            if [ ! -f osv-results.json ]; then
+              printf '{"results":[]}' > osv-results.json
+            fi
+          fi
+
+      - name: Run gitleaks scan
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gitleaks detect --source . --no-git --report-format json --report-path gitleaks-results.json; then
+            if [ ! -f gitleaks-results.json ]; then
+              printf '[]' > gitleaks-results.json
+            fi
+          fi
+
+      - name: Generate daily maintenance report
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
           mkdir -p .github/maintenance
+
           now_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          tracked_files="$(git ls-files | wc -l | tr -d " ")"
+          now_stockholm="$(TZ=Europe/Stockholm date +"%Y-%m-%d %H:%M:%S %Z")"
+          tracked_files="$(git ls-files | wc -l | tr -d ' ')"
           total_commits="$(git rev-list --count HEAD)"
 
-          cat > .github/maintenance/daily-report.md <<EOF2
+          osv_total="$(jq '[.results[]?.packages[]?.vulnerabilities[]?] | length' osv-results.json 2>/dev/null || echo 0)"
+          osv_critical="$(jq '[.results[]?.packages[]?.vulnerabilities[]? | (.database_specific.severity // "") | ascii_upcase | select(. == "CRITICAL")] | length' osv-results.json 2>/dev/null || echo 0)"
+          osv_high="$(jq '[.results[]?.packages[]?.vulnerabilities[]? | (.database_specific.severity // "") | ascii_upcase | select(. == "HIGH")] | length' osv-results.json 2>/dev/null || echo 0)"
+          osv_medium="$(jq '[.results[]?.packages[]?.vulnerabilities[]? | (.database_specific.severity // "") | ascii_upcase | select(. == "MEDIUM" or . == "MODERATE")] | length' osv-results.json 2>/dev/null || echo 0)"
+          osv_low="$(jq '[.results[]?.packages[]?.vulnerabilities[]? | (.database_specific.severity // "") | ascii_upcase | select(. == "LOW")] | length' osv-results.json 2>/dev/null || echo 0)"
+          osv_unknown="$((osv_total - osv_critical - osv_high - osv_medium - osv_low))"
+          if [ "$osv_unknown" -lt 0 ]; then osv_unknown=0; fi
+
+          gitleaks_findings="$(jq 'length' gitleaks-results.json 2>/dev/null || echo 0)"
+          gitleaks_top="$(jq -r 'if length == 0 then "- none" else (group_by(.File) | map({file: .[0].File, count: length}) | sort_by(-.count) | .[:5] | .[] | "- \(.file): \(.count)") end' gitleaks-results.json 2>/dev/null || echo '- none')"
+
+          cat > .github/maintenance/daily-report.md <<EOF
           # Daily Maintenance Report
 
-          Last run (UTC): ${now_utc}
-          Tracked files: ${tracked_files}
-          Total commits on branch: ${total_commits}
-          EOF2
+          - Run UTC: ${now_utc}
+          - Run Stockholm: ${now_stockholm}
+          - Trigger: ${{ github.event_name }}
+          - Gate reason: ${{ steps.gate.outputs.reason }}
+
+          ## Repository Stats
+          - Tracked files: ${tracked_files}
+          - Total commits on branch: ${total_commits}
+
+          ## OSV Dependency Scan
+          - Vulnerabilities total: ${osv_total}
+          - Critical: ${osv_critical}
+          - High: ${osv_high}
+          - Medium/Moderate: ${osv_medium}
+          - Low: ${osv_low}
+          - Unknown severity: ${osv_unknown}
+
+          ## Gitleaks Secret Pattern Scan
+          - Findings total: ${gitleaks_findings}
+          - Top files:
+          ${gitleaks_top}
+
+          ## Notes
+          - Report generated by GitHub Actions.
+          - Raw scan JSON files are not committed.
+          EOF
 
       - name: Commit report if changed
+        if: steps.gate.outputs.run == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -48,5 +163,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .github/maintenance/daily-report.md
-          git commit -m "chore: daily maintenance report"
+          git commit -m "chore(maintenance): daily report + security scan"
           git push
